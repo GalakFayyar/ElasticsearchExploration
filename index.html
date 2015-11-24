@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html ng-app="appModule">
+	<head>
+		<meta charset="utf-8">
+		<title>ElasticUI POC</title>
+
+		<!-- CSS -->
+		<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" />
+		<link rel="stylesheet" href="slick.grid/slick.grid.css" type="text/css"/>
+		<link rel="stylesheet" href="css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
+		<link rel="stylesheet" type="text/css" media="all" href="json.explorer/angular-json-explorer.css" />
+
+		<style>
+			.sidebar {
+				position: fixed;
+				top: 0;
+				bottom: 0;
+				z-index: 1000;
+				display: block;
+				padding: 20px;
+				overflow-x: hidden;
+				overflow-y: auto;
+				background-color: #f5f5f5;
+				border-right: 1px solid #eee;
+			}
+			.instructions {
+				display: block;
+				margin: 0 auto;
+				width: 450px;
+			}
+			#myGrid {
+				height:300px;
+			}
+		</style>
+
+		<!-- JS -->
+		<script src="http://code.angularjs.org/1.2.16/angular.js"></script>
+		<script src="http://rawgit.com/YousefED/ElasticUI/master/examples/demo/lib/elasticsearch.angular.js"></script>
+		<script src="http://rawgit.com/YousefED/ElasticUI/master/examples/demo/lib/elastic.js"></script>
+		<script src="http://rawgit.com/YousefED/ElasticUI/master/dist/elasticui.min.js"></script>
+
+		<!--<script src="lib/ui-bootstrap-0.14.3.min.js"></script>-->
+
+		<script src="json.explorer/angular-json-explorer.min.js"></script>
+
+		<script src="lib/jquery-1.7.min.js"></script>
+		<script src="lib/jquery.event.drag-2.2.js"></script>
+
+		<script src="slick.grid/slick.core.js"></script>
+		<script src="slick.grid/slick.grid.js"></script>
+
+		<script>
+			var app = angular.module('appModule', ['elasticui', 'ngJsonExplorer']).constant('euiHost', 'http://localhost:9200');
+
+			app.factory("elasticFunc", function(){
+				return {
+					
+					/**
+					* @desc Function which is used to handle elasticsearch error 
+					*/
+					"elasticsearchError" : function (error) {
+						if (error) {
+							console.error(error);
+						}
+						else {
+						}
+					},
+
+					/**
+					* @desc create a new index on elasticsearch server designed by client 
+					* @param client an elasticSearch.js client alredy initialised
+					* @param indexName the name of the new index 
+					* @param func callback function by default elasticearchError 
+					*/
+					"createIndex" : function (client, indexName, func) {
+						if (typeof(func) ==='undefined') 
+							func = this.elasticsearchError;
+						client.indices.create({index:indexName}, this.elasticsearchError);
+					},
+
+					/**
+					* @desc delete an index on elasticsearch server designed by client 
+					* @param client an elasticSearch.js client alredy initialised
+					* @param indexName the name of the index to delete 
+					* @param func callback function by default elasticearchError 
+					*/
+					"deleteIndex" : function(client, indexName, func) {
+						if (typeof(func) ==='undefined') 
+							func = this.elasticsearchError;
+						client.indices.delete({index:indexName}, this.elasticsearchError);
+					},
+
+					/**
+					* @desc send document to an elasticsearch server
+					* @param client elasticsearch js client
+					* @param indexName the index name where to post the document
+					* @param type document type
+					* @param doc the document in json
+					* @param id id of the document 
+					* @param func callback function by default elasticearchError 
+					*/
+					"sendDocument" : function (client, indexName, type, doc, id, func) {
+						if (typeof(func) ==='undefined') 
+							func = this.elasticsearchError;
+						client.index({
+							index:indexName,
+							type:type,
+							id:id,
+							body: doc
+						}, func)
+					},
+					/**
+					* @desc get document on an elasticsearch server
+					* @param client elasticsearch js client
+					* @param indexName the index name where to post the document
+					* @param type document type
+					* @param id id of the document 
+					* @param func callback function by default elasticearchError 
+					*/
+					"getDocument" : function (client, indexName, type, id, func) {
+						if (typeof(func) ==='undefined') 
+							func = this.elasticsearchError;
+						client.get({
+							index:indexName,
+							type:type,
+							id:id
+						}, func)
+					},
+					
+					/**
+					* @desc delete document on an elasticsearch server
+					* @param client elasticsearch js client
+					* @param indexName the index name where to delete the document
+					* @param type document type
+					* @param id id of the document 
+					* @param func callback function by default elasticearchError 
+					*/
+					"deleteDocument" : function (client, indexName, type, id, func) {
+						if (typeof(func) ==='undefined') {
+							func = this.elasticsearchError;				
+						} 
+						client.delete({
+							index:indexName,
+							type:type,
+							id:id
+						}, func)
+
+					},
+
+					/**
+					* @desc send a new document to an elasticsearch server (id auto)
+					* @param client elasticsearch js client
+					* @param indexName the index name where to post the document
+					* @param type document type
+					* @param doc the document in json
+					* @param func callback function by default elasticearchError 
+					*/
+					"sendNewDocument" : function (client, indexName, type, doc, func) {
+						if (typeof(func) ==='undefined') 
+							func = this.elasticsearchError;
+						client.index({
+							index:indexName,
+							type:type,
+							body: doc
+						}, func)
+					},
+
+
+					/**
+					* @desc Get the mapping of an elasticsearch index
+					* @param client elasticsearch js client
+					* @param indexName the index name where to post the document
+					* @param type document type by default all
+					* @param func callback function, by default elasticearchError 
+					*/
+					"getMapping" : function (client, indexName, func)
+					{
+						if (typeof(func) ==='undefined') 
+							func = this.elasticsearchError;
+						client.indices.getMapping({
+							index:indexName,
+						}, func);
+					}
+				};
+			});
+
+			
+			app.service('elasticClient', function(esFactory) {
+					return { 
+						getClient: function(server) {	
+			          	  return esFactory({
+			            	    host: server,
+			            	});
+			        	}
+			   		}
+			   	}
+			);
+
+
+
+			app.controller('MainCtrl', ['$scope', '$filter', '$compile', 'elasticClient', 'elasticFunc', function ($scope, $filter, $compile, elasticClient, elasticFunc) {
+
+
+				var mappingObj = {
+					info: {
+						mappingsList: undefined,
+						currentMapping: undefined,
+						selectedMapping: undefined,
+						currentIndex: undefined
+					}
+				}
+
+				function getMappingCB(error, resp) {		
+					mappingObj.info.mappingsList = resp;
+					mappingObj.info.currentMapping = resp[mappingObj.info.currentIndex];
+					if (typeof(mappingObj.info.currentMapping) === "undefined") {
+						for(key in  resp) {
+							mappingObj.info.currentMapping = resp[key];
+							mappingObj.info.selectedMapping = key;
+							break ;
+						}
+					}
+					else {
+						mappingObj.info.selectedMapping = mappingObj.info.currentIndex;
+					}	
+				}
+
+				var client = elasticClient.getClient('http://localhost:9200');
+				var mapping = elasticFunc.getMapping(client, 'rubrique_metier_dev', getMappingCB);
+
+
+
+
+
+				var grid,
+					columns = [
+						// {id: "title", name: "Title", field: "title"},
+						// {id: "duration", name: "Duration", field: "duration"},
+						// {id: "%", name: "% Complete", field: "percentComplete"},
+						// {id: "start", name: "Start", field: "start"},
+						// {id: "finish", name: "Finish", field: "finish"},
+						// {id: "effort-driven", name: "Effort Driven", field: "effortDriven"}
+					],
+					options = {
+						enableCellNavigation: true,
+						enableColumnReorder: false
+					};
+
+				$scope.toggle = {
+					rubriques: false
+				};
+
+				$scope.toggleRubriques = function () {
+					$scope.toggle.rubriques = !$scope.toggle.rubriques;	
+				};
+
+				// $scope.$watchCollection('filters.ejsObjects', function () {
+				// 	var drawGrid = false;
+				// 	console.log('Update');
+
+				// 	$scope.filters.ejsObjects.forEach(function (filteredObject) {
+				// 		if (filteredObject.terms()[0] == 'rubrique') {
+				// 			drawGrid = true;
+				// 			columns = [
+				// 				{id: "_id", name: "Id", field: "_id"},
+				// 				{id: "code_an8", name: "Code AN8", field: "code_an8"},
+				// 				{id: "libelle", name: "Libellé", field: "libelle"}
+				// 			];
+				// 		}
+				// 	});
+
+				// 	var data = [];
+				// 	$scope.indexVM.results.hits.hits.forEach(function (elt) {
+				// 		data.push(elt._source);
+				// 	});
+
+				// 	if (drawGrid) {
+				// 		grid = new Slick.Grid("#myGrid", data, columns, options);
+				// 	}
+				// });
+				
+
+				// $(function () {
+				// 	var data = [];
+				// 	for (var i = 0; i < 500; i++) {
+				// 		data[i] = {
+				// 			title: "Task " + i,
+				// 			duration: "5 days",
+				// 			percentComplete: Math.round(Math.random() * 100),
+				// 			start: "01/01/2009",
+				// 			finish: "01/05/2009",
+				// 			effortDriven: (i % 5 == 0)
+				// 		};
+				// 	}
+				// 	grid = new Slick.Grid("#myGrid", data, columns, options);
+				// });
+
+			}]);
+		</script>
+	</head>
+	<body  ng-controller="MainCtrl"
+			eui-index="'rubrique_metier_dev'" 
+			eui-sort="ejs.Sort('code_an8').order('asc')" 
+			eui-highlight="ejs.Highlight('_id').preTags('<mark>').postTags('</mark>')" 
+			eui-enabled="true">
+
+		<div class="container-fluid">
+
+			<div class="row">
+				<div class="col-xs-3 sidebar">
+					<form>
+						<div class="form-group">
+							<label>Recherche (AN8)</label>
+							<!--<eui-searchbox field="'code_an8'"></eui-searchbox>-->
+							<input type="text" class="form-control" eui-query="ejs.MatchQuery('code_an8', querystring)" ng-model="querystring" eui-enabled="querystring.length" />
+						</div>
+						<div class="form-group">
+							<label>User Modification <small>Single select facet</small></label>
+							<eui-singleselect field="'user_modification'" size="5"></eui-singleselect>
+						</div>
+						<div class="form-group">
+							<label>A Risque <small>Multi select facet</small></label>
+							<eui-checklist field="'a_risque'" size="10"></eui-checklist>
+						</div>
+						<div class="form-group">
+							<label ng-click="toggleRubriques()" style="cursor:pointer">Type de document</label>
+							<ul ng-show="toggle.rubriques" class="nav nav-list" eui-aggregation="ejs.TermsAggregation('_type').field('_type').size(50)">
+								<li ng-repeat="bucket in aggResult.buckets">
+									<label class="checkbox" eui-filter="ejs.TermsFilter('_type', bucket.key)">
+										<input type="checkbox" ng-model="filter.enabled">
+										{{bucket.key}} ({{bucket.doc_count}})
+									</label>
+								</li>
+							</ul>
+						</div>
+
+						<div class="form-group">
+							<label>Results Per Page</label>
+							<select ng-model="indexVM.pageSize">
+								<option ng-repeat="item in [10, 20, 50, 100]">{{item}}</option>
+							</select>
+						</div>
+					</form>
+
+
+
+					<!-- <h3>User Modification <small>Single select facet</small></h3>
+					<eui-singleselect field="'user_modification'" size="5"></eui-singleselect> -->
+
+					<!-- <h3>A Risque <small>Multi select facet</small></h3>
+					<eui-checklist field="'a_risque'" size="10"></eui-checklist> -->
+
+					<!-- <h3>Type de document</h3>
+					<ul class="nav nav-list" eui-aggregation="ejs.TermsAggregation('_type').field('_type').size(50)">
+						<li ng-repeat="bucket in aggResult.buckets">
+							<label class="checkbox" eui-filter="ejs.TermsFilter('_type', bucket.key)">
+								<input type="checkbox" ng-model="filter.enabled" ng-change="updateFilter()">
+								{{bucket.key}} ({{bucket.doc_count}})
+							</label>
+						</li>
+					</ul> -->
+
+					
+				</div>
+				<div class="col-xs-9 col-xs-offset-3 main">
+					<!-- <div class="instructions panel panel-primary">
+						<div class="panel-heading">Getting started with the Demo</div>
+						<div class="panel-body">
+							Instructions, modify this file according to the following:
+							<ol>
+								<li>Set the constant euiHost in &lt;head&gt; to point to your cluster</li>
+								<li>Change eui-index on &lt;body&gt; tag to the name of your index</li>
+								<li>Set the field attributes on the facets in the sidebar to meaningful fields of your data</li>
+							</ol>
+						</div>
+					</div> -->
+
+					<h1>Results</h1>
+					<eui-simple-paging></eui-simple-paging>
+					<!-- <div id="myGrid"></div> -->
+					<!-- <ul>
+						<li ng-repeat="doc in indexVM.results.hits.hits">
+							<b><small>{{doc._type}} - {{doc._id}}</small></b><br/>
+							{{doc._source | json | limitTo: 10000}} OPTIONAL: display more meaningful data instead of json
+						</li>
+					</ul> -->
+					<div ng-repeat="doc in indexVM.results.hits.hits">
+						<!-- <h4 style="cursor:pointer">{{doc._type}} - {{doc._id}}</h4> -->
+						<div class="json-content">
+							<json-explorer data="doc" collapsed="true"></json-explorer>
+						</div>
+					</div>
+
+					<eui-simple-paging></eui-simple-paging>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

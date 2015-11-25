@@ -1,0 +1,14 @@
+<div class="">
+	<a href="./index.html" class="logo">J@nus v2</a>
+</div>
+<div class="header-container">
+	<div class="input-group">
+		<input type="text" class="form-control" eui-query="ejs.MatchQuery('code_an8', querystring)" ng-model="querystring" eui-enabled="querystring.length" />
+		<span class="input-group-btn">
+			<button class="btn btn-default"><i class="fa fa-search"></i></button>
+		</span>
+	</div>
+</div>
+<div class="header-container">
+	<toggle-switch class="toggle-switch-content" ng-model="switchDisplayContent.status" ng-change="displayContent()" knob-label="Contenu" on-label="Afficher" off-label="Masquer"><toggle-switch>
+</div>

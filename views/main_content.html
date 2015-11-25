@@ -1,0 +1,37 @@
+<article class="first">
+
+	<tabset justified="true">
+		<tab heading="Elasticsearch">
+			
+			<div class="pagination">
+				<small>Pagination</small>
+				<select ng-model="indexVM.pageSize">
+					<option ng-repeat="item in [10, 20, 50]">{{item}}</option>
+				</select>
+			</div>
+
+			<eui-simple-paging></eui-simple-paging>
+
+			<div ng-repeat="doc in indexVM.results.hits.hits">
+				<div class="panel panel-info">
+					<div class="panel-heading" onclick="$(this).siblings('.panel-body').slideToggle()" style="cursor:pointer">{{doc._type}} <span class="badge">{{doc._id}}</span></div>
+					<div class="panel-body">
+						<div class="json-content">
+							<json-explorer data="doc._source" collapsed="true"></json-explorer>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<eui-simple-paging></eui-simple-paging>
+		</tab>
+		<tab heading="Rubriques">
+			<!-- Ajouter directive ui-grid-cellNav pour édition dans cellule au clic focus -->
+			<div ui-grid="rubriquesGrid" class="rubriquesGrid" ui-grid-pagination ui-grid-exporter ui-grid-auto-resize ui-grid-resize-columns ui-grid-selection></div>
+		</tab>
+	</tabset>
+	
+</article>
+<article class="second">
+	toto
+</article>

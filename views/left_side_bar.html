@@ -1,0 +1,52 @@
+<ul class="nav nav-list">
+	<li><a href=""><i class="fa fa-home"></i> Home</a></li>
+	<li class="separator"></li>
+</ul>
+
+<calendar class="filter-calendar" selected="day.value"></calendar>
+
+<span style="font-size:0.9em;margin-left:5px">Date recherchée : <strong>{{day.value.format('dddd Do MMMM YYYY')}}</strong></span>
+<input ng-show="false" type="text" ng-model="day.value" />
+
+<h5 ng-click="toggleUsers()" style="cursor:pointer"><i class="fa fa-chevron-right"></i> User Modification <small>Single select facet</small></h5>
+<div class="list">
+	<!-- <eui-singleselect ng-show="toggle.users" field="'user_modification'" size="5"></eui-singleselect> -->
+	<ul ng-show="toggle.users" class="nav nav-list" eui-aggregation="ejs.TermsAggregation('user_modification').field('user_modification').size(50)">
+		<li ng-repeat="bucket in aggResult.buckets">
+			<label class="checkbox" eui-filter="ejs.TermsFilter('user_modification', bucket.key)">
+				<input type="checkbox" ng-model="filter.enabled">
+				{{bucket.key}} <span class="badge">{{bucket.doc_count}}</span>
+			</label>
+		</li>
+	</ul>
+</div>
+
+<h5 ng-click="toggleRubriques()" style="cursor:pointer"><i class="fa fa-chevron-right"></i> Type de document</h5>
+<div class="list">
+	<ul ng-show="toggle.rubriques" class="nav nav-list" eui-aggregation="ejs.TermsAggregation('_type').field('_type').size(50)">
+		<li ng-repeat="bucket in aggResult.buckets">
+			<label class="checkbox" eui-filter="ejs.TermsFilter('_type', bucket.key)">
+				<input type="checkbox" ng-model="filter.enabled">
+				{{bucket.key}} <span class="badge">{{bucket.doc_count}}</span>
+			</label>
+		</li>
+	</ul>
+</div>
+
+<h5 ng-click="toggleThematiquesBP()" style="cursor:pointer"><i class="fa fa-chevron-right"></i> Thématiques Bon Plan</h5>
+<div class="list">
+	<!-- <eui-checklist field="'thematique_bons_plans'" size="50"></eui-checklist> -->
+	<ul ng-show="toggle.thematiques_bp" class="nav nav-list" eui-aggregation="ejs.TermsAggregation('thematique_bons_plans.code').field('thematique_bons_plans.code').size(50)">
+		<li ng-repeat="bucket in aggResult.buckets">
+			<label class="checkbox" eui-filter="ejs.TermsFilter('thematique_bons_plans.code', bucket.key)">
+				<input type="checkbox" ng-model="filter.enabled">
+				{{bucket.key}} <span class="badge">{{bucket.doc_count}}</span>
+			</label>
+		</li>
+	</ul>
+</div>
+
+<!-- <h5><i class="fa fa-chevron-right"></i> A Risque <small>Multi select facet</small></h5>
+<div class="list">
+	<eui-checklist field="'a_risque'" size="10"></eui-checklist>
+</div> -->

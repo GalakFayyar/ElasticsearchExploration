@@ -1,6 +1,8 @@
 // elasticSearchJsFunf.js
+'use strict'
 
-app.factory("elasticFunc", function(log){
+app.factory("elasticFunc", function(){
+	var log = console;
 	return {
 		
 		/**

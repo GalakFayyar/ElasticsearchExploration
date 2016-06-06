@@ -1,5 +1,6 @@
-# p1
-Projet Exploration Elasticsearch
+# Project Exploration Elasticsearch
+## Presentation
+Projet POC for data exploration in Elasticsearch.
 
-## Launch Notes
+## Install Notes
 python -m SimpleHTTPServer
